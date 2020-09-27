@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Container, Box, Paper } from "@material-ui/core";
 import { Pagination } from "@material-ui/lab";
 
+import rangy from "rangy";
+import "rangy/lib/rangy-textrange.js";
+
 import { Header, ButtonRow } from "./components";
 import { useKeyPress } from "./hooks";
 
@@ -41,56 +44,42 @@ export const App = () => {
     }
   }, [pressedKey]);
 
-  const handleSelection = () => {
-    const selection = window.getSelection();
-    const selectionStartIdx = selection.anchorOffset;
-    const selectionEndIdx = selection.extentOffset;
+  const handleClick = () => {};
 
-    const findSpaceIdx = (text, idx, diff = 1) => {
-      const normalisedText = text.replace(/[\r\n]/g, " ");
-      let spaceIdx = false;
-      while (spaceIdx === false) {
-        const letter = normalisedText.slice(idx, idx + 1);
-        if (letter === " ") {
-          spaceIdx = idx;
-        }
-        idx += diff;
-        if (idx >= normalisedText.length) {
-          spaceIdx = idx;
-        }
-        if (idx < 0 && diff == -1) {
-          spaceIdx = idx;
-        }
-      }
-      return spaceIdx;
-    };
-
-    const originalTextSection = originalText.slice(
-      originalText.indexOf(selection.anchorNode.data)
-    );
-    const startIdx = findSpaceIdx(
-      selection.anchorNode.data,
-      selectionStartIdx,
-      -1
-    );
-    const endIdx = findSpaceIdx(selection.anchorNode.data, selectionEndIdx);
-
-    const offsetLength = originalText.replace(originalTextSection, "").length;
-    const selectedWord = originalText.slice(
-      offsetLength + startIdx + 1,
-      offsetLength + endIdx
-    );
+  const handleSelection = (event) => {
+    const selection = rangy.getSelection();
+    const range = selection.getRangeAt(0);
+    range.expand("word", {
+      wordOptions: {
+        includeTrailingSpace: false,
+      },
+    });
+    selection.setSingleRange(range);
+    const selectedText = selection.toString();
 
     if (activeKey) {
-      setState((x) => ({ ...x, [selectedWord]: activeKey }));
+      setState((x) => {
+        // filter out if the word is already in a selection
+        const _state = Object.keys(x).reduce((acc, key) => {
+          const words = key.split(" ");
+          const selectedWords = selectedText.split(" ");
+          const alreadyExists = selectedWords.reduce(
+            (bool, word) => bool || !!~words.indexOf(word),
+            false
+          );
+          return alreadyExists ? acc : { ...acc, [key]: x[key] };
+        }, {});
+        return { ..._state, [selectedText]: activeKey };
+      });
     }
     selection.removeAllRanges();
   };
 
   const inlineText = Object.keys(state).reduce((text, key) => {
+    const regex = new RegExp(` ${key} `, "g");
     return text.replace(
-      key,
-      `<span style="background-color:${colors[state[key] - 1]}">${key}</span>`
+      regex,
+      ` <span style="background-color:${colors[state[key] - 1]}">${key}</span> `
     );
   }, originalText);
 
@@ -106,6 +95,7 @@ export const App = () => {
             <Box p={3}>
               <p
                 className="input-paragraph"
+                onClick={handleClick}
                 onMouseUp={handleSelection}
                 dangerouslySetInnerHTML={{ __html: inlineText }}
               />
