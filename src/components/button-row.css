@@ -1,0 +1,18 @@
+.item-buttons-row .item-button {
+  margin-right: 10px !important;
+  color: white;
+}
+
+.item-button .item-button-number {
+  border-radius: 5px;
+  background-color: white;
+  color: inherit;
+  margin-right: 5px;
+  width: 14px;
+  line-height: 16px;
+  font-family: monospace;
+}
+
+.item-button-active {
+  box-shadow: 0 0 0 2px black !important;
+}
