@@ -8,14 +8,14 @@ import "rangy/lib/rangy-textrange.js";
 import { Header, ButtonRow } from "./components";
 import { useKeyPress } from "./hooks";
 
-const originalText = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+const originalText = `Lorem ipsum dolor sit amet, consectetur adipiscing 
+elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
 enim ad minim veniam, quis nostrud exercitation ullamco laboris
 nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
 in reprehenderit in voluptate velit esse cillum dolore eu fugiat
 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
 sunt in culpa qui officia deserunt mollit anim id est laborum.
-`;
+`.replace(/\n/g, ' ');
 
 const colors = [
   "#2e97df",
@@ -55,7 +55,7 @@ export const App = () => {
       },
     });
     selection.setSingleRange(range);
-    const selectedText = selection.toString();
+    const selectedText = selection.toString().trim().replace(/\r\n/g, ' ');
 
     if (activeKey) {
       setState((x) => {
@@ -76,21 +76,24 @@ export const App = () => {
   };
 
   const inlineText = Object.keys(state).reduce((text, key) => {
-    const regex = new RegExp(` ${key} `, "g");
-    return text.replace(
+    const regex = new RegExp(` ${key}`, "g");
+    const alteredText = text.replace(
       regex,
-      ` <span style="background-color:${colors[state[key] - 1]}">${key}</span> `
+      ` <span style="background-color:${colors[state[key] - 1]}">${key}</span>`
     );
+    return alteredText;
   }, originalText);
-
-  console.log(state);
 
   return (
     <>
       <Header />
       <Box mt={4} mb={2}>
         <Container maxWidth="md">
-          <ButtonRow activeKey={activeKey} items={items} />
+          <ButtonRow
+            activeKey={activeKey}
+            items={items}
+            setActiveKey={setActiveKey}
+          />
           <Paper elevation={0}>
             <Box p={3}>
               <p
